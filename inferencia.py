@@ -44,13 +44,26 @@ while True:
 
         if recorte.size != 0:
             recorte = cv2.resize(recorte, (640, 640), interpolation=cv2.INTER_CUBIC)
-            resultados = model.predict(recorte, conf=0.55)
+            resultados = model.predict(recorte, conf=0.4)  # Reducir confianza para más detecciones
             if len(resultados) != 0:
                 for result in resultados:
-                    masks = result.masks
-                    coordenadas = masks
-                    anotaciones = resultados[0].plot()
-                cv2.imshow("RECORTE", anotaciones)
+                    # Obtener la clase detectada
+                    if len(result.boxes) > 0:
+                        clase_id = int(result.boxes[0].cls[0])
+                        clase_nombre = model.names[clase_id]
+                        confianza = float(result.boxes[0].conf[0])
+                        
+                        # Mostrar en pantalla principal
+                        cv2.putText(frame, f"Letra: {clase_nombre} ({confianza:.2f})", 
+                                  (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
+                        
+                        # Mostrar recorte con detección
+                        anotaciones = result.plot()
+                        cv2.imshow("RECORTE", anotaciones)
+                        print(f"Detectado: {clase_nombre} con confianza {confianza:.2f}")
+            else:
+                # Mostrar recorte sin detección
+                cv2.imshow("RECORTE", recorte)
 
     #Mostrar FPS
     cv2.imshow("Lenguaje Vocales",frame)
