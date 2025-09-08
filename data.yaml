@@ -1,0 +1,6 @@
+train: C:\Users\Asus TUF\Desktop\LenguajeVocales\dataset\train\images
+val: C:\Users\Asus TUF\Desktop\LenguajeVocales\dataset\valid\images
+test:
+nc: 26
+names: ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z']
+

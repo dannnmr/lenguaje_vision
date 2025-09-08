@@ -30,7 +30,7 @@ while True:
     #realizar la lectura de la cap
     ret,frame=cap.read()
     #extra informacion de la mano
-    frame=detector.encontrarmanos(frame,dibujar=False) #!!!PUNTOS
+    frame=detector.encontrarmanos(frame,dibujar=True) #!!!PUNTOS
     #posicion de una sola mano
     lista1, bbox, mano=detector.encontrarposicion(frame,ManoNum=0,dibujarPuntos=False, dibujarBox=False, color=[0,255,0])
     #si hay mano
