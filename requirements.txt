@@ -3,3 +3,5 @@ opencv-python==4.11.0.86
 mediapipe==0.10.21
 numpy
 Pillow
+gtts==2.5.1
+pygame==2.6.0

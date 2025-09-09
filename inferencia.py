@@ -1,6 +1,12 @@
 import cv2
 import SeguimientoManos as sm
 from ultralytics import YOLO
+from gtts import gTTS
+import pygame
+import os
+import time
+import tempfile
+import threading
 
 #lectura de la camara
 cap=cv2.VideoCapture(0)
@@ -13,6 +19,39 @@ model=YOLO('last.pt')
 
 #declarar detector
 detector=sm.detectormanos(Confdeteccion=0.9)
+
+# Inicializar pygame para reproducir audio
+pygame.mixer.init()
+
+# Variables para control de TTS
+ultima_letra = ""
+ultimo_tiempo_tts = 0
+intervalo_tts = 2  # Segundos entre reproducciones de la misma letra
+
+def reproducir_tts(texto):
+    """Función para convertir texto a voz y reproducirlo"""
+    try:
+        # Crear objeto gTTS
+        tts = gTTS(text=texto, lang='es', slow=False)
+        
+        # Crear archivo temporal
+        with tempfile.NamedTemporaryFile(delete=False, suffix='.mp3') as temp_file:
+            temp_filename = temp_file.name
+            tts.save(temp_filename)
+        
+        # Reproducir el archivo
+        pygame.mixer.music.load(temp_filename)
+        pygame.mixer.music.play()
+        
+        # Esperar a que termine la reproducción
+        while pygame.mixer.music.get_busy():
+            pygame.time.wait(100)
+        
+        # Limpiar archivo temporal
+        os.unlink(temp_filename)
+        
+    except Exception as e:
+        print(f"Error en TTS: {e}")
 
 while True:
     #realizar la lectura de la cap
@@ -57,6 +96,25 @@ while True:
                         cv2.putText(frame, f"Letra: {clase_nombre} ({confianza:.2f})", 
                                   (50, 50), cv2.FONT_HERSHEY_SIMPLEX, 2, (0, 255, 0), 3)
                         
+                        # Mostrar estado del TTS
+                        if pygame.mixer.music.get_busy():
+                            cv2.putText(frame, "Reproduciendo audio...", 
+                                      (50, 100), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 255), 2)
+                        
+                        # Control de TTS - reproducir solo si es una nueva letra o ha pasado el intervalo
+                        tiempo_actual = time.time()
+                        if (clase_nombre != ultima_letra or 
+                            tiempo_actual - ultimo_tiempo_tts > intervalo_tts):
+                            
+                            # Reproducir TTS en un hilo separado para no bloquear la detección
+                            hilo_tts = threading.Thread(target=reproducir_tts, args=(f"Letra {clase_nombre}",))
+                            hilo_tts.daemon = True
+                            hilo_tts.start()
+                            
+                            # Actualizar variables de control
+                            ultima_letra = clase_nombre
+                            ultimo_tiempo_tts = tiempo_actual
+                        
                         # Mostrar recorte con detección
                         anotaciones = result.plot()
                         cv2.imshow("RECORTE", anotaciones)
@@ -65,6 +123,10 @@ while True:
                 # Mostrar recorte sin detección
                 cv2.imshow("RECORTE", recorte)
 
+    # Mostrar instrucciones
+    cv2.putText(frame, "ESC: Salir | TTS activado", 
+              (50, frame.shape[0] - 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 255, 255), 2)
+    
     #Mostrar FPS
     cv2.imshow("Lenguaje Vocales",frame)
     #leer nuestro teclado
